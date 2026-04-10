@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>brat ADMIN - 권한 관리</title>
+
+    <script>
+        (function () {
+            const isSuper = localStorage.getItem('isSuperAdmin') === 'true';
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            if (!isSuper && !isAdmin) {
+                alert("관리자만 접근 가능합니다.");
+                location.href = "./index.html";
+            }
+        })();
+    </script>
+
+    <style>
+        body {
+            background-image: url('./imgs/brat.png');
+            background-color: #8ace00;
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            margin: 0;
+            padding-top: 100px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 30px;
+            border: 5px solid black;
+            box-shadow: 15px 15px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 2px solid #8ace00;
+            gap: 10px;
+        }
+
+        .user-info {
+            text-align: left;
+        }
+
+        .role-badge {
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+
+        .role-admin {
+            background: #ff4d4d;
+            color: white;
+        }
+
+        .role-user {
+            background: #555;
+            color: white;
+        }
+
+        .btn-group button {
+            padding: 5px 10px;
+            margin-left: 5px;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+        }
+
+        .promote-btn {
+            background: #8ace00;
+            color: black;
+        }
+
+        .demote-btn {
+            background: orange;
+            color: black;
+        }
+
+        .delete-btn {
+            background: red;
+            color: white;
+        }
+
+        /* [추가된 반응형 CSS] 기존 스타일을 건드리지 않고 하단에 추가 */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 80px;
+            }
+
+            .container {
+                width: 90%;
+                padding: 15px;
+            }
+
+            .user-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-group {
+                margin-top: 10px;
+                width: 100%;
+                display: flex;
+                justify-content: flex-start;
+            }
+
+            .btn-group button {
+                margin-left: 0;
+                margin-right: 5px;
+                flex: 1;
+                font-size: 12px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+
+        /* 반응형 컨테이너 보정 */
+        @media (max-width: 768px) {
+
+            .container,
+            .main-content {
+                width: 95% !important;
+                padding: 20px !important;
+                margin-top: 70px !important;
+            }
+
+            h1 {
+                font-size: 30px !important;
+            }
+
+            /* 테이블 가로 스크롤 대응 */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 500px;
+                /* 테이블이 너무 찌그러지지 않게 최소 너비 유지 */
+            }
+
+            /* 버튼 배치 조정 */
+            .btn-container {
+                flex-direction: column;
+                display: flex;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>USER MANAGEMENT</h1>
+        <p style="color:#8ace00;">관리자 권한 부여 및 유저 삭제</p>
+        <ul id="user-list-display" class="user-list">
+        </ul>
+    </div>
+
+    <script src="JS/navbar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderUsers();
+        });
+
+        function renderUsers() {
+            const userListDisplay = document.getElementById('user-list-display');
+            const users = JSON.parse(localStorage.getItem('bratUsers')) || {};
+            const isSuper = localStorage.getItem('isSuperAdmin') === 'true';
+
+            userListDisplay.innerHTML = '';
+
+            Object.keys(users).forEach(id => {
+                // 마스터 계정(jjh)은 목록에 표시하되 수정 불가
+                if (id === 'jjh') return;
+
+                const user = users[id];
+                const isAdmin = user.role === 'admin';
+
+                const li = document.createElement('li');
+                li.className = 'user-item';
+                li.innerHTML = `
+                    <div class="user-info">
+                        <span>ID: ${id}</span>
+                        <span class="role-badge ${isAdmin ? 'role-admin' : 'role-user'}">${user.role.toUpperCase()}</span>
+                    </div>
+                    <div class="btn-group">
+                        ${isSuper ? (
+                        isAdmin
+                            ? `<button class="demote-btn" onclick="demoteUser('${id}')">ADMIN 취소</button>`
+                            : `<button class="promote-btn" onclick="promoteUser('${id}')">ADMIN 부여</button>`
+                    ) : ''}
+                        <button class="delete-btn" onclick="deleteUser('${id}')">계정 삭제</button>
+                    </div>
+                `;
+                userListDisplay.appendChild(li);
+            });
+        }
+
+        function promoteUser(id) {
+            if (localStorage.getItem('isSuperAdmin') !== 'true') return alert("마스터 권한이 필요해!");
+            if (confirm(`${id}에게 관리자 권한을 줄 거야?`)) {
+                let users = JSON.parse(localStorage.getItem('bratUsers')) || {};
+                if (users[id]) {
+                    users[id].role = 'admin';
+                    localStorage.setItem('bratUsers', JSON.stringify(users));
+                    renderUsers();
+                }
+            }
+        }
+
+        function demoteUser(id) {
+            if (localStorage.getItem('isSuperAdmin') !== 'true') return alert("마스터 권한이 필요해!");
+            if (confirm(`${id}의 관리자 권한을 취소할 거야?`)) {
+                let users = JSON.parse(localStorage.getItem('bratUsers')) || {};
+                if (users[id]) {
+                    users[id].role = 'user';
+                    localStorage.setItem('bratUsers', JSON.stringify(users));
+                    renderUsers();
+                }
+            }
+        }
+
+        function deleteUser(id) {
+            // 보안: 마스터나 관리자만 삭제 가능
+            const isSuper = localStorage.getItem('isSuperAdmin') === 'true';
+            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+            if (!isSuper && !isAdmin) return alert("권한이 없어!");
+
+            if (confirm(`${id}를 삭제할 거야? 작성한 글도 모두 사라져!`)) {
+                let users = JSON.parse(localStorage.getItem('bratUsers')) || {};
+                delete users[id];
+                localStorage.setItem('bratUsers', JSON.stringify(users));
+
+                // 게시판 글 삭제 로직 (기존 유지)
+                let posts = JSON.parse(localStorage.getItem('bratPosts')) || [];
+                const updatedPosts = posts.filter(post => {
+                    const pureAuthor = post.author.replace("(ADMIN)", "");
+                    return pureAuthor !== id;
+                });
+
+                // ID 재정렬 (기존 로직 유지)
+                const reorderedPosts = updatedPosts.slice().reverse().map((post, index) => ({
+                    ...post,
+                    id: index + 1
+                })).reverse();
+
+                localStorage.setItem('bratPosts', JSON.stringify(reorderedPosts));
+
+                alert(`${id} 계정이 삭제되었어.`);
+                renderUsers();
+            }
+        }
+    </script>
+</body>
+
+</html>
