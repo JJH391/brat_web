@@ -40,7 +40,6 @@
             box-shadow: 15px 15px 0px rgba(0, 0, 0, 0.2);
             width: 100%;
             max-width: 400px;
-            /* 반응형 핵심 */
             box-sizing: border-box;
             text-align: center;
         }
@@ -85,7 +84,6 @@
             cursor: pointer;
         }
 
-        /* 반응형 미디어 쿼리 */
         @media (max-width: 480px) {
             .auth-container {
                 width: 90%;
@@ -98,7 +96,6 @@
             }
         }
 
-        /* 반응형 컨테이너 보정 */
         @media (max-width: 768px) {
 
             .container,
@@ -112,7 +109,6 @@
                 font-size: 30px !important;
             }
 
-            /* 테이블 가로 스크롤 대응 */
             .table-container {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
@@ -120,10 +116,8 @@
 
             table {
                 min-width: 500px;
-                /* 테이블이 너무 찌그러지지 않게 최소 너비 유지 */
             }
 
-            /* 버튼 배치 조정 */
             .btn-container {
                 flex-direction: column;
                 display: flex;
@@ -152,8 +146,9 @@
         <span class="toggle-link" onclick="toggleAuth()">이미 계정이 있어? (LOGIN)</span>
     </div>
 
+    <script type="module" src="JS/firebase_sync.js"></script>
+
     <script>
-        // 보안: 특수문자 및 공백 필터링 (XSS 및 주입 공격 방지)
         function validateInput(str) {
             const re = /[<>{}[]\\\/ ]/g;
             return !re.test(str);
@@ -183,6 +178,10 @@
 
             users[id] = { pw: pw, role: 'user' };
             localStorage.setItem('bratUsers', JSON.stringify(users));
+
+            // [신규 추가] 회원가입 후 서버로 유저 정보 전송
+            if (window.uploadToCloud) window.uploadToCloud();
+
             alert("회원가입 완료! 이제 로그인해.");
             toggleAuth();
         }
@@ -193,7 +192,6 @@
 
             if (!validateInput(id) || !validateInput(pw)) return alert("허용되지 않은 문자가 포함되어 있어.");
 
-            // MASTER ADMIN 체크 (보안: 로직 내 직접 비교)
             if (id === 'jjh' && pw === '091006.com!') {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userId', 'jjh');

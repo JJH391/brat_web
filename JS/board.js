@@ -1,4 +1,4 @@
-// JS/board.js (전체 코드 - 서버 연동 추가 버전)
+// JS/board.js
 document.addEventListener('DOMContentLoaded', () => {
     loadPosts();
     const currentId = localStorage.getItem('userId');
@@ -28,6 +28,7 @@ function addPost() {
     const titleInput = document.getElementById('post-title');
     if (!titleInput.value) return alert("제목을 써줘!");
 
+    // 보안: XSS 방지
     const sanitizedTitle = titleInput.value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     if (sanitizedTitle.length > 100) return alert("100자 이내!");
 
@@ -38,9 +39,10 @@ function addPost() {
     posts.unshift({ id: 0, title: sanitizedTitle, author: finalAuthor, date: new Date().toISOString().split('T')[0] });
     posts = reorderPosts(posts);
 
-    // [수정 안 함] 기존 저장 로직
+    // 기존 로직 유지
     localStorage.setItem('bratPosts', JSON.stringify(posts));
-    // [신규 추가] 서버로 업로드 신호 발송
+
+    // [추가] 클라우드 동기화 신호
     if (window.uploadToCloud) window.uploadToCloud();
 
     titleInput.value = '';
@@ -81,7 +83,7 @@ function adminDel(index) {
         posts.splice(index, 1);
         const newPosts = reorderPosts(posts);
         localStorage.setItem('bratPosts', JSON.stringify(newPosts));
-        if (window.uploadToCloud) window.uploadToCloud(); // 서버 연동
+        if (window.uploadToCloud) window.uploadToCloud(); // 동기화
         renderTable(newPosts);
     }
 }
@@ -94,7 +96,7 @@ function editPost(index) {
     if (nt && nt.length <= 100) {
         posts[index].title = nt.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         localStorage.setItem('bratPosts', JSON.stringify(posts));
-        if (window.uploadToCloud) window.uploadToCloud(); // 서버 연동
+        if (window.uploadToCloud) window.uploadToCloud(); // 동기화
         renderTable(posts);
     }
 }
@@ -106,7 +108,7 @@ function deleteLastPost() {
         posts.splice(myIdx, 1);
         const newPosts = reorderPosts(posts);
         localStorage.setItem('bratPosts', JSON.stringify(newPosts));
-        if (window.uploadToCloud) window.uploadToCloud(); // 서버 연동
+        if (window.uploadToCloud) window.uploadToCloud(); // 동기화
         renderTable(newPosts);
     }
 }
@@ -118,7 +120,7 @@ function clearBoard() {
         const filtered = posts.filter(p => p.author.replace("(ADMIN)", "") !== currentUserId || p.id <= 2);
         const newPosts = reorderPosts(filtered);
         localStorage.setItem('bratPosts', JSON.stringify(newPosts));
-        if (window.uploadToCloud) window.uploadToCloud(); // 서버 연동
+        if (window.uploadToCloud) window.uploadToCloud(); // 동기화
         renderTable(newPosts);
     }
 }
