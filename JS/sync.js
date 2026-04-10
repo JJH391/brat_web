@@ -21,13 +21,14 @@ const postsRef = ref(db, 'bratPosts');
 const usersRef = ref(db, 'bratUsers');
 
 // [기능 1] 내 로컬 데이터를 클라우드로 업로드 (공유용)
-window.uploadToCloud = function () {
+window.uploadToCloud = () => {
     const posts = JSON.parse(localStorage.getItem('bratPosts')) || [];
     const users = JSON.parse(localStorage.getItem('bratUsers')) || {};
 
+    // Firebase에 데이터 덮어쓰기
     set(postsRef, posts);
     set(usersRef, users);
-    console.log("Cloud Updated!");
+    console.log("데이터가 클라우드로 전송되었습니다!");
 };
 
 // [기능 2] 남이 수정한 데이터를 내 화면에 실시간 반영
